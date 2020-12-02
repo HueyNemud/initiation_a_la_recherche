@@ -1,9 +1,10 @@
 import geocoders.ban as ban
 import geocoders.ign as ign
+import geocoders.ghd as ghd
 from statistics import median, stdev, mean
 from timeit import default_timer as timer
 from datasets import annuaires_du_commerce
-from geocoders.util import ban_to_dataframe, ign_to_dataframe
+from geocoders.util import ban_to_dataframe, ign_to_dataframe, ghd_to_dataframe
 import logging
 import pandas as pd
 
@@ -13,8 +14,9 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 # Méthode principale
 def main():
     ds1 = annuaires_du_commerce.dataset_1()  # Charge les données à géocoder
-    exec_ign(ds1)  # Géocode avec le service IGN et sauvegarde le résultat
-    exec_ban(ds1)  # Géocode avec le service BAN et sauvegarde le résultat
+    exec_ghd(ds1)  # Géocode avec le service IGN et sauvegarde le résultat
+    #exec_ign(ds1)  # Géocode avec le service IGN et sauvegarde le résultat
+    #exec_ban(ds1)  # Géocode avec le service BAN et sauvegarde le résultat
 
 
 def exec_ban(dataset):
@@ -55,6 +57,27 @@ def exec_ign(dataset):
 
     # Concatène le tableau des résultats aux données d'entrée et sauvegarde le résultat
     pd.concat([dataset, all], axis=1).to_csv('annuaire_du_commerce_ign.csv')
+
+def exec_ghd(dataset):
+    # Définit les options de géocodage
+    number_of_results = 1
+    ghd_opts = {'date': 1820}
+
+    # Géocode le contenu de la colonne 'address' dans dataset.
+    logging.info(f"Executing GHD geocoder (date = {ghd_opts.get('date')})")
+    addresses_plus_paris = dataset['address'] + ' Paris'  # Force à chercher dans Paris (75)
+    results, runtimes = run(addresses_plus_paris, ghd.geocode, opts= ghd_opts)
+
+    # Affiche les statistiques de temps d'exécution
+    summary(dataset, results, runtimes)
+
+    # Transforme les résultats renvoyés par le géocodeur en tableau Pandas
+    all = ghd_to_dataframe.transform(results, keep_only=number_of_results)
+
+    # Concatène le tableau des résultats aux données d'entrée et sauvegarde le résultat
+    pd.concat([dataset, all], axis=1).to_csv('annuaire_du_commerce_ghd.csv')
+
+
 
 
 def run(dataset, geocoder, **kwargs):

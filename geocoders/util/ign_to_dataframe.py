@@ -12,7 +12,7 @@ def transform(results, keep_only=1):
     max_matches = max([len(r['body']['features']) for r in results])
     keep_only = min(max_matches, keep_only)
 
-    all_data = [ as_dict(r['body']['features'][:keep_only]) for r in results]
+    all_data = [as_dict(r['body']['features'][:keep_only]) for r in results]
     return pd.DataFrame(all_data)
 
 
